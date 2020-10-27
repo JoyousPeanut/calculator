@@ -1,56 +1,106 @@
-// Calculator Animations
 const calc = () => {
-  // Declarations
-  let calcNumbers = [];
-  const screen = document.getElementById("calcScreen");
+  // Resets State
+  const init = () => {
+    screen.innerHTML = "";
+    calculator.displayValue = "0";
+    calculator.firstOperand = null;
+    calculator.waitingForSecondOperand = false;
+    calculator.operator = null;
+  };
 
   // Calculator operations
   const calculator = {
-    divide: function (...numbers) {
-      return numbers / numbers;
-    },
-    subtract: function (args) {
-      let result = args.reduce((acc, curr) => {
-        return acc - curr;
-      });
-      return result;
-    },
-    multiply: function (args) {
-      // To Fix
-      let result = args.reduce((acc, curr) => {
-        return acc * curr;
-      });
-      return result;
-    },
-    addition: function (args) {
-      let result = args.reduce((acc, curr) => {
-        return acc + curr;
-      });
-      return result;
-    }
+    displayValue: "0",
+    firstOperand: null,
+    waitingForSecondOperand: false,
+    operator: null,
+    answer: null
   };
 
-  // Hover Highlight
-  let numbBtn = document.getElementsByClassName("numberBtn");
-  for (let i = 0; i < numbBtn.length; i++) {
-    numbBtn[i].addEventListener("mouseover", (event) => {
-      event.target.classList.toggle("btnHover");
-    }); // Button Press Animation
-    numbBtn[i].addEventListener("click", (event) => {
-      event.target.classList.toggle("shadow");
-      let pressedBtn = event.target;
-      console.log(pressedBtn.innerHTML);
+  function inputNum(number) {
+    const { displayValue } = calculator;
+    if (calculator.waitingForSecondOperand === true) {
+      calculator.displayValue = number;
+      calculator.waitingForSecondOperand = false;
+    } else {
+      calculator.displayValue =
+        displayValue === "0" ? number : displayValue + number;
+    }
+  }
 
-      calcNumbers.push(parseInt(pressedBtn.innerHTML, 10)); // Pushes pressed buttons to array
-      screen.innerHTML = calcNumbers.join("");
+  // Calculations
+  function calculate(firstOperand, secondOperand, operator) {
+    switch (operator) {
+      case "+":
+        return firstOperand + secondOperand;
+      case "-":
+        return firstOperand - secondOperand;
+      case "x":
+        return firstOperand * secondOperand;
+      case "/":
+        return firstOperand / secondOperand;
+      default:
+        return secondOperand;
+    }
+  }
+
+  // Handles Next Number
+  const handleNextNum = (nextOperator) => {
+    const { firstOperand, displayValue, operator } = calculator;
+    const inputValue = parseFloat(displayValue);
+
+    if (operator && calculator.waitingForSecondOperand) {
+      calculator.operator = nextOperator;
+      return;
+    }
+
+    if (firstOperand === null && !isNaN(inputValue)) {
+      calculator.firstOperand = inputValue;
+    } else if (operator) {
+      const result = calculate(firstOperand, inputValue, operator);
+      calculator.displayValue = String(result);
+      calculator.firstOperand = result;
+    }
+    calculator.waitingForSecondOperand = true;
+    calculator.operator = nextOperator;
+  };
+
+  // Handles Display
+  const screen = document.getElementById("calcScreen");
+  const updateDisplay = (disp) => {
+    screen.innerHTML = disp;
+  };
+
+  // Clear Button
+  let clearBtn = document.getElementById("clear");
+  clearBtn.addEventListener("click", init);
+
+  // Buttons Event Delegation
+
+  const buttonHandler = () => {
+    const btn = document.getElementById("calculatorButtons");
+
+    // Click Shadow animation
+    btn.addEventListener("click", (event) => {
+      const { target } = event;
+      if (target.classList.contains("numberBtn")) {
+        inputNum(target.innerHTML);
+        updateDisplay(calculator.displayValue);
+      }
+
+      if (target.classList.contains("operatorBtn")) {
+        handleNextNum(target.innerHTML);
+        updateDisplay(calculator.displayValue);
+      }
+      // Click Shadow animation
+      event.target.classList.toggle("shadow");
       setTimeout(() => {
         event.target.classList.toggle("shadow"); // Toggles Shadow on Mouse Hover
       }, 300);
-    }); // Removes Hover Highlight
-    numbBtn[i].addEventListener("mouseout", (event) => {
-      event.target.classList.toggle("btnHover");
     });
-  }
+  };
+
+  buttonHandler();
 };
 
 calc();
